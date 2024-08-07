@@ -31,7 +31,9 @@ def generate_dxf():
         fy = int(request.form['fy'])
         # ------------------step-1-------------geometery
         effective_length = clear_span + cd / 2000
-
+        if (beam_length>10):
+            return("For cantilever over 10m ,this tool is not valid")
+            sys.exit()
         def get_nominal_cover(exposure_condition):
             covers = {
                 "Mild": 20,
@@ -138,7 +140,13 @@ def generate_dxf():
 
             #plt.tight_layout()
             #plt.show()
-
+        #slenderness check
+        s1=25*wall_thickness
+        s2=100*wall_thickness*wall_thickness/effective_depth
+        slender=min(s1,s2)
+        if(clear_span>slender/1000):
+            return("The clear distance from the free end of the cantilever to the lateral restraiant shall not exceeds 25 b or (100 b^2)/d which ever is less. IS:456 Clause 23.3")
+            sys.exit()
         # Interactive execution is needed to uncomment and use the following lines:
         point_loads = []
         udl = int(request.form['udl'])
@@ -171,8 +179,9 @@ def generate_dxf():
             print("astmin", astmin)
             astmax = .04 * b * provided_depth
             print("Maximum Ast:", astmax)
+            ast=max(ast,astmin)
             if (astmax < astmin or astmax < ast):
-                return("Revise Section,Tensile Reinforcement Exceeds 4% #1")
+                return("Revise Section,Tensile Reinforcement Exceeds 4%")
                 sys.exit()
             # --------------------------------------Top bars------------------------
             if (ast > astmin):
@@ -256,6 +265,29 @@ def generate_dxf():
             print("provide", no_of_bars_bottom, "-Φ", bottom_bar, " mm as main bars at the bottom")
 
             print("percentage of steel provided(Compression Reinforcement): ", pt)
+            #side-face
+            if provided_depth > 750:
+                sideast = 0.0005 * wall_thickness * provided_depth
+                side_bar = [12, 16, 20, 25, 32, 40]
+                results1 = []
+                print(sideast)
+                # Calculate the required number of bars for each available diameter
+                for num in side_bar:
+                    # Calculate the result
+                    required_area_per_bar = max(sideast / (num * num * 0.785), 2)
+                    # Store the diameter and the required number of bars (rounded up)
+                    results1.append((num, math.ceil(required_area_per_bar)))
+
+                # Find suitable bars and count
+                suitable_bars = [(num, count) for num, count in results1 if 1 <= count < 5]
+                if suitable_bars:
+                    side_bar, no_of_bars_side = suitable_bars[0]  # Select the first suitable option
+                else:
+                    side_bar, no_of_bars_side = (12, 1)  # Default to 12mm bar and 1 bar if no suitable option is found
+
+                # Print the result
+                print("Provide", no_of_bars_side, "no of", side_bar, "mm bars on each side of the beam")
+
             # --------------------------check for shear-----------------------------
             ultimate_shear_force = usf
             vu = ultimate_shear_force * 1000
@@ -293,8 +325,7 @@ def generate_dxf():
                 # print(max_spacing)
                 print("Provide Φ", stdia, "- mm ", leg, "vertical stirrups @", max_spacing, "c/c")
             else:
-                return("revise section (per Cl. 40.2.3, IS 456: 2000, pp. 72 #2")
-                sys.exit()
+                return("revise section (per Cl. 40.2.3, IS 456: 2000, pp. 72")
             # step 6:Check for Deflection
             l = revised_effective_length
             Actualspan = l / effective_depth
@@ -330,8 +361,7 @@ def generate_dxf():
             if (allowablespan > Actualspan):
                 print(" The section is safe under deflection")
             else:
-                return(" revise section #3")
-                sys.exit()
+                return(" revise section")
             no_bars_top = no_of_bars_top
             main_bar = main_bar
             top_bar = main_bar
@@ -959,8 +989,9 @@ def generate_dxf():
             print("astmin", astmin)
             astmax = .04 * b * provided_depth
             print("Maximum Ast:", astmax)
+            ast=max(ast,astmin)
             if (astmax > astmin or astmax > ast):
-                return("Revise Section #4")
+                return("Revise Section")
                 sys.exit()
             # --------------------------------------Top bars-----------------------------------------------------------------------------------------------------
             if (ast > astmin):
@@ -1073,6 +1104,28 @@ def generate_dxf():
                 print("provide", no_of_bars_bottom, "-Φ", bottom_bar, " mm as main bars at the bottom")
 
                 print("percentage of steel provided(Compression Reinforcement): ", pt)
+            #side face
+            if provided_depth > 750:
+                sideast = 0.0005 * wall_thickness *  provided_depth
+                side_bar = [12, 16, 20, 25, 32, 40]
+                results1 = []
+                print(sideast)
+                # Calculate the required number of bars for each available diameter
+                for num in side_bar:
+                    # Calculate the result
+                    required_area_per_bar = max(sideast / (num * num * 0.785), 2)
+                    # Store the diameter and the required number of bars (rounded up)
+                    results1.append((num, math.ceil(required_area_per_bar)))
+
+                # Find suitable bars and count
+                suitable_bars = [(num, count) for num, count in results1 if 1 <= count < 5]
+                if suitable_bars:
+                    side_bar, no_of_bars_side = suitable_bars[0]  # Select the first suitable option
+                else:
+                    side_bar, no_of_bars_side = (12, 1)  # Default to 12mm bar and 1 bar if no suitable option is found
+
+                # Print the result
+                print("Provide", no_of_bars_side, "no of", side_bar, "mm bars on each side of the beam")
             # --------------------------check for shear-----------------------------------------------------
             ultimate_shear_force = usf
             vu = ultimate_shear_force * 1000
@@ -1110,8 +1163,7 @@ def generate_dxf():
                 # print(max_spacing)
                 print("Provide Φ", stdia, "- mm ", leg, "vertical stirrups @", max_spacing, "c/c")
             else:
-                return("revise section (per Cl. 40.2.3, IS 456: 2000, pp. 72 #5")
-                sys.exit()
+                return("revise section (per Cl. 40.2.3, IS 456: 2000, pp. 72")
             # step 6:Check for Deflection---------------------
             l = revised_effective_length
             Actualspan = l / effective_depth
@@ -1149,8 +1201,7 @@ def generate_dxf():
             if (allowablespan > Actualspan):
                 print(" The section is safe under deflection")
             else:
-                return(" revise section #6")
-                sys.exit()
+                return(" revise section")
             no_bars_top = no_of_bars_top
             top_bar = main_bar
             print("bot dia", bottom_bar)
@@ -1759,8 +1810,7 @@ def generate_dxf():
             print("top", no_of_bars_top)
 
     # --------------------------------------------------------------------------------------------------------------simply--------------------------
-    elif (
-            beam_type == "Simply Supported"):  # ----------------------------------------------simply supported-----------------------
+    elif (beam_type == "Simply Supported"):  # ----------------------------------------------simply supported-----------------------
         beam_length = float(request.form['beam_length'])
         clear_span = beam_length
         exposure_condition = request.form['exposure']
@@ -1855,14 +1905,17 @@ def generate_dxf():
         b = wall_thickness
         o_d = round(overall_depth, -2)
         print("Overall depth:", o_d)
-        print("effective_depth: ", effective_depth
-
-              )
+        print("effective_depth: ", effective_depth)
         print("Assumed width of beam:", b)
         L = clear_span + wall_thickness / 1000  # Length of the beam (meters)
         # (Magnitude of the point load (Newtons), Position (meters from one end))
         q = live_load + wall_thickness * overall_depth * 25 / 1000000  # Magnitude of the uniform distributed load (Newtons per meter)
-
+        s1 = 60 * wall_thickness
+        s2 = 250 * wall_thickness * wall_thickness / effective_depth
+        slender = min(s1, s2)
+        if (clear_span > slender / 1000):
+            return ("The clear distance between the lateral restraiant shall not exceeds 60 b or (250 b^2)/d which ever is less IS:456 Clause 23.3")
+            sys.exit()
         # print(q)
         # Adjust calculation for support reactions
         def calculate_reactions(L, point_loads, q):
@@ -1977,7 +2030,7 @@ def generate_dxf():
             astmax = .04 * b * o_d
             print("Maximum Ast:", astmax)
             if (astmax < astmin or astmax < ast):
-                return("Revise Section,Tensile Reinforcement Exceeds 4% #7")
+                return("Revise Section,Tensile Reinforcement Exceeds 4%")
                 sys.exit()
             # bottom bars
             if (ast > astmin):
@@ -2061,6 +2114,28 @@ def generate_dxf():
             print("Provide", no_of_bars_top, "-Φ", top_bar, " mm as main bars at the top")
 
             print("Percentage of steel provided(Compression Reinforcement): ", pt)
+            #Side-face Reinforcement
+            if o_d > 750:
+                sideast = 0.0005 * wall_thickness * o_d
+                side_bar = [12, 16, 20, 25, 32, 40]
+                results1 = []
+                print(sideast)
+                # Calculate the required number of bars for each available diameter
+                for num in side_bar:
+                    # Calculate the result
+                    required_area_per_bar = max(sideast / (num * num * 0.785), 2)
+                    # Store the diameter and the required number of bars (rounded up)
+                    results1.append((num, math.ceil(required_area_per_bar)))
+
+                # Find suitable bars and count
+                suitable_bars = [(num, count) for num, count in results1 if 1 <= count < 5]
+                if suitable_bars:
+                    side_bar, no_of_bars_side = suitable_bars[0]  # Select the first suitable option
+                else:
+                    side_bar, no_of_bars_side = (12, 1)  # Default to 12mm bar and 1 bar if no suitable option is found
+
+                # Print the result
+                print("Provide", no_of_bars_side, "no of", side_bar, "mm bars on each side of the beam")
             # step-5:check for shear
             vu = ultimate_shear_force * 1000
             tv = vu / (b * effective_depth)
@@ -2096,8 +2171,7 @@ def generate_dxf():
                 print("spacing",spacing)
                 print("Provide Φ", stdia, "- mm ", leg, "vertical stirrups @", max_spacing, "c/c")
             else:
-                return("revise section (per Cl. 40.2.3, IS 456: 2000, pp. 72 #8")
-                sys.exit()
+                return("revise section (per Cl. 40.2.3, IS 456: 2000, pp. 72")
             # step 6:Check for Deflection
             Actualspan = l / effective_depth
             bd = b * effective_depth / (100 * ast)
@@ -2174,22 +2248,21 @@ def generate_dxf():
             print("shrinkage",shrinkage)
             span_net = clear_span * 1000 / (total_deflection)
             if (long_term_delta > 20):
-                return("Revise Section,Long Term Deflection Exceeds 20mm #9")
+                return("Revise Section,Long Term Deflection Exceeds 20mm")
                 sys.exit()
             elif (span_ltd < 350):
                 print(span_ltd)
-                return("Revise Section,span/Long Term Deflection is less than 350 #10")
+                return("Revise Section,span/Long Term Deflection is less than 350")
                 sys.exit()
             elif (span_net < 250):
                 print(span_net)
-                return("Revise Section,span/Net Total Term Deflection is less than 250 #11")
+                return("Revise Section,span/Net Total Term Deflection is less than 250")
                 sys.exit()
             print("modification factor: ", mf)
             if (allowablespan > Actualspan):
                 print(" The section is safe under deflection")
             else:
-                return(" revise section #12")
-                sys.exit()
+                return(" revise section")
 
 
 
@@ -2207,7 +2280,7 @@ def generate_dxf():
             astmax = .04 * b * (effective_depth + effective_cover)
             print("Maximum Ast:", astmax)
             if (astmax < astmin or astmax < ast):
-                return("Revise Section,Tensile Reinforcement Exceeds 4% #13")
+                return("Revise Section,Tensile Reinforcement Exceeds 4%")
                 sys.exit()
             # print(ast)
             # print(ast2)
@@ -2225,7 +2298,7 @@ def generate_dxf():
                 main_bar, no_of_bars_bottom = suitable_bars[0]  # Select the first suitable option
             else:
                 main_bar, no_of_bars_bottom = (0, 0)  # Default to zero if no suitable option is found
-                return("Revise Section,Bars are too close to each other #14")
+                return("Revise Section,Bars are too close to each other")
                 sys.exit()
             # Calculate the area of steel provided and percentage
             ab = no_of_bars_bottom * 0.78539816339744830961566084581988 * main_bar ** 2
@@ -2285,7 +2358,29 @@ def generate_dxf():
                 top_bar_provided = top_bar
                 print("provide", no_of_bars_top, "-Φ", top_bar, " mm as main bars at the top")
                 print("percentage of steel provided(Compression Reinforcement): ", pt)
-                # step-5:check for shear
+            #side face
+            if o_d > 750:
+                sideast = 0.0005 * wall_thickness * o_d
+                side_bar = [12, 16, 20, 25, 32, 40]
+                results1 = []
+                print(sideast)
+                # Calculate the required number of bars for each available diameter
+                for num in side_bar:
+                    # Calculate the result
+                    required_area_per_bar = max(sideast / (num * num * 0.785), 2)
+                    # Store the diameter and the required number of bars (rounded up)
+                    results1.append((num, math.ceil(required_area_per_bar)))
+
+                # Find suitable bars and count
+                suitable_bars = [(num, count) for num, count in results1 if 1 <= count < 5]
+                if suitable_bars:
+                    side_bar, no_of_bars_side = suitable_bars[0]  # Select the first suitable option
+                else:
+                    side_bar, no_of_bars_side = (12, 1)  # Default to 12mm bar and 1 bar if no suitable option is found
+
+                # Print the result
+                print("Provide", no_of_bars_side, "no of", side_bar, "mm bars on each side of the beam")
+            # step-5:check for shear
             vu = ultimate_shear_force * 1000
             tv = vu / (b * effective_depth)
             # print(effective_depth)
@@ -2395,20 +2490,19 @@ def generate_dxf():
             span_ltd = clear_span * 1000 / (creep_x + shrinkage)
             span_net = clear_span * 1000 / (total_deflection)
             if (long_term_delta > 20):
-                return("Revise Section,Long Term Deflection Exceeds 20mm #15")
+                return("Revise Section,Long Term Deflection Exceeds 20mm")
                 sys.exit()
             elif (span_ltd < 350):
-                return("Revise Section,span/Long Term Deflection is less than 350 #116")
+                return("Revise Section,span/Long Term Deflection is less than 350")
                 sys.exit()
             elif (span_net < 250):
-                return("Revise Section,span/Net Total Term Deflection is less than 250 #17")
+                return("Revise Section,span/Net Total Term Deflection is less than 250")
                 sys.exit()
             # print("modification factor: ", mf)
             if (allowablespan > Actualspan):
                 print(" The section is safe under deflection")
             else:
-                return(" revise section #18")
-                sys.exit()
+                return(" revise section")
         no_bars_bottom = no_of_bars_bottom
         no_bars_top = no_of_bars_top
         main_bar = main_bar
