@@ -29,6 +29,8 @@ def generate_dxf():
         span_d = 4
         fck = int(request.form['fck'])
         fy = int(request.form['fy'])
+        if(wall_thickness<200):
+            return("The width of the member shall not be less than 200 mm as per IS: 13920 clause 6.1.3")
         # ------------------step-1-------------geometery
         effective_length = clear_span + cd / 2000
         if (beam_length>10):
@@ -2080,7 +2082,8 @@ def generate_dxf():
         live_load = float(request.form['udl'])
         num_point_loads = 0
         point_loads = []
-
+        if(wall_thickness<200):
+            return("The width of the member shall not be less than 200 mm as per IS: 13920 clause 6.1.3")
         # Loop to get details for each point load
         for i in range(num_point_loads):
             magnitude = float(input(f"Enter the magnitude of point load #{i + 1} (in Kilo Newtons): ") or 50)
